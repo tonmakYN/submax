@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - ภาพที่อัปโหลด</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <h1 class="text-3xl font-bold mb-6">ภาพที่อัปโหลดทั้งหมด</h1>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {% for upload in uploads %}
+        <div class="bg-gray-800 p-2 rounded-lg">
+            <img src="data:image/jpeg;base64,{{ upload[1] }}" alt="Upload {{ upload[0] }}" class="w-full h-auto rounded">
+            <p class="text-xs text-gray-400 mt-2">ID: {{ upload[0] }}</p>
+            <p class="text-xs text-gray-500">{{ upload[2] }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
+

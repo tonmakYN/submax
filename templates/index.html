@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lookmaxxing AI Suite - Elite Analyst Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #020617; }
+        .glass-card { background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+        .loader { border: 6px solid rgba(255, 255, 255, 0.2); border-radius: 50%; border-top: 6px solid #0ea5e9; width: 50px; height: 50px; animation: spin 1.5s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.7s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .result-tab.active { color: #0ea5e9; border-bottom-color: #0ea5e9; }
+        .chat-bubble-user { background-color: #0ea5e9; color: white; }
+        .chat-bubble-ai { background-color: #1e293b; }
+        .chat-container::-webkit-scrollbar { width: 6px; }
+        .chat-container::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="text-slate-300 min-h-screen p-4 md:p-8">
+    <div class="container mx-auto max-w-7xl w-full">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-blue-400 mb-2">
+                Lookmaxxing AI Suite
+            </h1>
+            <p class="text-lg text-slate-500">Elite Analyst Edition: วิเคราะห์โครงสร้างใบหน้า 360°</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- Left Column: Controls -->
+            <div class="lg:col-span-2 space-y-8">
+                <div class="glass-card rounded-2xl p-6 shadow-2xl">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center"><i class="fas fa-upload mr-3 text-sky-400"></i>อัปโหลดโปรไฟล์</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Front Profile Uploader -->
+                        <div>
+                            <label class="block text-center mb-2 font-semibold">หน้าตรง (Front)</label>
+                            <div id="image-container-front" class="relative w-full h-48 bg-slate-900/50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-700">
+                                <img id="image-preview-front" src="" class="hidden w-full h-full rounded-lg object-cover" alt="Front Preview">
+                                <span id="placeholder-text-front" class="text-slate-600 text-center text-sm"><i class="fas fa-user text-3xl"></i></span>
+                            </div>
+                            <input type="file" id="image-upload-front" accept="image/*" class="hidden">
+                            <button id="upload-button-front" class="w-full mt-2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-3 rounded-lg text-sm">เลือกไฟล์</button>
+                        </div>
+                        <!-- Side Profile Uploader -->
+                        <div>
+                            <label class="block text-center mb-2 font-semibold">ด้านข้าง (Side)</label>
+                            <div id="image-container-side" class="relative w-full h-48 bg-slate-900/50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-700">
+                                <img id="image-preview-side" src="" class="hidden w-full h-full rounded-lg object-cover" alt="Side Preview">
+                                <span id="placeholder-text-side" class="text-slate-600 text-center text-sm"><i class="fas fa-user-alt text-3xl"></i></span>
+                            </div>
+                            <input type="file" id="image-upload-side" accept="image/*" class="hidden">
+                            <button id="upload-button-side" class="w-full mt-2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-3 rounded-lg text-sm">เลือกไฟล์</button>
+                        </div>
+                    </div>
+                </div>
+
+                 <button id="analyze-button" class="w-full bg-gradient-to-r from-blue-500 to-sky-400 hover:opacity-90 text-white font-bold py-4 px-4 rounded-lg transition duration-300 shadow-2xl text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" disabled>
+                    <i class="fas fa-brain mr-2"></i> เริ่มการวิเคราะห์เชิงลึก
+                </button>
+            </div>
+
+            <!-- Right Column: Results -->
+            <div class="lg:col-span-3">
+                <div id="results-area" class="glass-card rounded-2xl p-6 md:p-8 shadow-2xl min-h-[600px] flex flex-col">
+                    <div id="loader" class="hidden h-full flex-col items-center justify-center"><div class="loader mb-4"></div><p class="text-slate-500">AI กำลังวิเคราะห์โครงสร้างกระดูก... อาจใช้เวลาสักครู่</p></div>
+                    <div id="welcome-message" class="h-full flex flex-col items-center justify-center text-center"><i class="fas fa-ruler-combined text-6xl text-sky-500 mb-4"></i><h2 class="text-3xl font-bold mb-2">พร้อมสำหรับการวิเคราะห์ที่แม่นยำที่สุด</h2><p class="text-slate-500">อัปโหลดภาพหน้าตรงเพื่อเริ่มต้น (แนะนำให้อัปโหลดด้านข้างด้วย)</p></div>
+                    <div id="analysis-results" class="hidden fade-in flex-grow flex flex-col">
+                        <!-- Result Tabs -->
+                        <div class="flex border-b border-slate-700 mb-6 flex-shrink-0">
+                            <button data-tab="front" class="result-tab active flex-1 font-semibold py-3 text-lg border-b-4 border-transparent transition">วิเคราะห์หน้าตรง</button>
+                            <button data-tab="side" class="result-tab flex-1 font-semibold py-3 text-lg border-b-4 border-transparent transition">วิเคราะห์หน้าด้านข้าง</button>
+                            <button data-tab="chat" class="result-tab flex-1 font-semibold py-3 text-lg border-b-4 border-transparent transition">AI Chat Advisor</button>
+                        </div>
+                        <!-- Tab Content -->
+                        <div id="tab-content-front" class="tab-content flex-grow overflow-y-auto"></div>
+                        <div id="tab-content-side" class="tab-content hidden flex-grow overflow-y-auto"></div>
+                        <div id="tab-content-chat" class="tab-content hidden flex-grow flex flex-col"></div>
+                    </div>
+                    <div id="error-message" class="hidden text-red-400 bg-red-900/30 p-4 rounded-lg"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        // --- DOM Elements ---
+        const imageUploadFront = document.getElementById('image-upload-front');
+        const uploadButtonFront = document.getElementById('upload-button-front');
+        const imagePreviewFront = document.getElementById('image-preview-front');
+        const placeholderTextFront = document.getElementById('placeholder-text-front');
+        const imageUploadSide = document.getElementById('image-upload-side');
+        const uploadButtonSide = document.getElementById('upload-button-side');
+        const imagePreviewSide = document.getElementById('image-preview-side');
+        const placeholderTextSide = document.getElementById('placeholder-text-side');
+        const analyzeButton = document.getElementById('analyze-button');
+        const loader = document.getElementById('loader');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const analysisResults = document.getElementById('analysis-results');
+        const errorMessage = document.getElementById('error-message');
+        const resultTabs = document.querySelectorAll('.result-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // --- App State ---
+        let frontImageData = null;
+        let sideImageData = null;
+        let initialAnalysisJSON = null;
+        let chatHistory = [];
+
+        // --- Event Listeners ---
+        uploadButtonFront.addEventListener('click', () => imageUploadFront.click());
+        imageUploadFront.addEventListener('change', (e) => handleImageUpload(e, 'front'));
+        uploadButtonSide.addEventListener('click', () => imageUploadSide.click());
+        imageUploadSide.addEventListener('change', (e) => handleImageUpload(e, 'side'));
+        analyzeButton.addEventListener('click', handleAnalysis);
+        resultTabs.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+
+        // --- Functions ---
+        function handleImageUpload(event, profileType) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result.split(',')[1];
+                if (profileType === 'front') {
+                    imagePreviewFront.src = e.target.result;
+                    imagePreviewFront.classList.remove('hidden');
+                    placeholderTextFront.classList.add('hidden');
+                    frontImageData = { base64: base64, type: file.type };
+                } else {
+                    imagePreviewSide.src = e.target.result;
+                    imagePreviewSide.classList.remove('hidden');
+                    placeholderTextSide.classList.add('hidden');
+                    sideImageData = { base64: base64, type: file.type };
+                }
+                checkUploads();
+                resetResults();
+            }
+            reader.readAsDataURL(file);
+        }
+        
+        function checkUploads() {
+            analyzeButton.disabled = !frontImageData;
+        }
+
+        async function handleAnalysis() {
+            if (!frontImageData) { showError("กรุณาอัปโหลดภาพหน้าตรงก่อน"); return; }
+            
+            resetResults();
+            loader.classList.remove('hidden');
+            welcomeMessage.classList.add('hidden');
+            analyzeButton.disabled = true;
+
+            try {
+                const analysisData = await getAIAnalysis();
+                
+                if (analysisData) {
+                    initialAnalysisJSON = JSON.stringify(analysisData, null, 2);
+                    renderResults(analysisData);
+                    analysisResults.classList.remove('hidden');
+                    switchTab('front');
+                } else {
+                    showError("AI ไม่สามารถประมวลผลข้อมูลได้ในขณะนี้");
+                }
+            } catch (error) {
+                console.error("Analysis error:", error);
+                showError(`เกิดข้อผิดพลาด: ${error.message}`);
+            } finally {
+                loader.classList.add('hidden');
+                analyzeButton.disabled = false;
+            }
+        }
+
+        async function getAIAnalysis() {
+            const payload = {
+                frontImage: frontImageData.base64,
+                sideImage: sideImageData ? sideImageData.base64 : null
+            };
+
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "การเชื่อมต่อกับเซิร์ฟเวอร์ล้มเหลว");
+            }
+            return await response.json();
+        }
+        
+        // --- Chat Functions ---
+        function renderChatInterface() {
+            const chatContent = document.getElementById('tab-content-chat');
+            chatContent.innerHTML = `
+                <div id="chat-messages" class="chat-container flex-grow overflow-y-auto p-4 space-y-4">
+                    <div class="chat-bubble-ai p-3 rounded-lg max-w-md">
+                        สวัสดีครับ ผมคือ AI Advisor ของคุณ มีคำถามอะไรเกี่ยวกับผลการวิเคราะห์ ถามได้เลยครับ
+                    </div>
+                </div>
+                <div class="flex-shrink-0 p-4 border-t border-slate-700">
+                    <div class="flex space-x-2">
+                        <input type="text" id="chat-input" class="flex-grow bg-slate-800 border border-slate-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="ถามคำถามเกี่ยวกับใบหน้าของคุณ...">
+                        <button id="chat-send-button" class="bg-sky-500 hover:bg-sky-600 text-white font-bold p-3 rounded-lg flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('chat-send-button').addEventListener('click', handleSendMessage);
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSendMessage();
+            });
+        }
+
+        async function handleSendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessageToChat(message, 'user');
+            input.value = '';
+            
+            addMessageToChat('...', 'ai', true); // Thinking indicator
+
+            try {
+                const aiResponse = await getAIChatResponse(message);
+                updateLastAIMessage(aiResponse);
+            } catch (error) {
+                console.error("Chat error:", error);
+                updateLastAIMessage(`ขออภัยครับ เกิดข้อผิดพลาด: ${error.message}`);
+            }
+        }
+
+        function addMessageToChat(text, sender, isThinking = false) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const bubble = document.createElement('div');
+            bubble.className = `p-3 rounded-lg max-w-md ${sender === 'user' ? 'chat-bubble-user self-end' : 'chat-bubble-ai self-start'}`;
+            bubble.textContent = text;
+            if (isThinking) bubble.id = 'thinking-bubble';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex' + (sender === 'user' ? ' justify-end' : '');
+            wrapper.appendChild(bubble);
+
+            messagesContainer.appendChild(wrapper);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function updateLastAIMessage(text) {
+            const thinkingBubble = document.getElementById('thinking-bubble');
+            if(thinkingBubble) {
+                thinkingBubble.textContent = text;
+                thinkingBubble.id = '';
+            }
+        }
+        
+        async function getAIChatResponse(userInput) {
+            chatHistory.push({ role: "user", parts: [{ text: userInput }] });
+
+            const payload = {
+                chatHistory: chatHistory,
+                initialAnalysis: initialAnalysisJSON
+            };
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                 const errorData = await response.json();
+                 throw new Error(errorData.error || "Request to AI chat failed.");
+            }
+            
+            const result = await response.json();
+            const aiResponseText = result.response;
+            chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+
+            return aiResponseText;
+        }
+
+        // --- Render Functions (These functions remain exactly the same) ---
+        function renderResults(data) {
+            if (data.front_profile_analysis) renderFrontProfile(data.front_profile_analysis);
+            if (data.side_profile_analysis) renderSideProfile(data.side_profile_analysis);
+            renderChatInterface();
+            
+            const sideTabButton = document.querySelector('button[data-tab="side"]');
+            if (!data.side_profile_analysis) {
+                sideTabButton.classList.add('hidden');
+                document.querySelector('.result-tab[data-tab="front"]').classList.remove('flex-1');
+            }
+        }
+
+        function renderFrontProfile(data) {
+            const ratings = data.feature_ratings;
+            const psl = data.psl_scale;
+            const hairstyle = data.hairstyle_analysis;
+            
+            document.getElementById('tab-content-front').innerHTML = `
+                <div class="space-y-6">
+                    <!-- Ratings Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-card p-6 rounded-lg"><div class="text-center mb-4"><h3 class="font-bold text-slate-400 text-lg">คะแนนความงามโดยรวม</h3><p class="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-blue-400">${ratings.overall_score}</p><p class="text-slate-400 mt-2 text-sm">${data.ratings_summary}</p></div></div>
+                        <div class="glass-card p-6 rounded-lg"><h3 class="font-bold text-center text-slate-400 text-lg">PSL Scale Rating</h3><div class="text-center my-2"><span class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">${psl.rating.toFixed(1)}</span><span class="text-2xl font-semibold text-slate-400">/ 10</span></div><p class="text-center font-bold text-2xl text-purple-300 mb-2">${psl.tier}</p><p class="text-slate-400 text-center text-xs">${psl.summary}</p></div>
+                    </div>
+                    
+                    <div class="glass-card p-6 rounded-lg">
+                        <h3 class="text-xl font-bold mb-4 text-center">คะแนนองค์ประกอบใบหน้า</h3>
+                        <div class="border-t border-slate-700 pt-4">
+                            ${Object.entries(ratings).filter(([key]) => key !== 'overall_score').map(([key, score]) => {
+                                const translations = { eyes: 'ดวงตา', nose: 'จมูก', lips: 'ริมฝีปาก', jawline_and_chin: 'กรามและคาง', forehead_and_brows: 'หน้าผากและคิ้ว' };
+                                const color = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-sky-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500';
+                                return `<div class="mb-3"><div class="flex justify-between mb-1"><span class="text-base font-medium text-slate-300">${translations[key] || key}</span><span class="text-sm font-medium text-slate-300">${score} / 100</span></div><div class="w-full bg-slate-700 rounded-full h-2.5"><div class="${color} h-2.5 rounded-full" style="width: ${score}%"></div></div></div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Hairstyle Analysis -->
+                     <div class="glass-card p-6 rounded-lg">
+                        <h3 class="text-xl font-bold mb-4 text-center"><i class="fas fa-cut mr-2 text-sky-400"></i>การวิเคราะห์ทรงผม</h3>
+                        <p class="text-center text-slate-400 mb-4">${hairstyle.overall_recommendation}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-700 pt-4">
+                           <div>
+                                <h4 class="font-bold text-green-400 mb-2">ทรงผมที่แนะนำ</h4>
+                                <ul class="space-y-3">${hairstyle.recommended_styles.map(s => `<li><p class="font-semibold">${s.name}</p><p class="text-sm text-slate-400">${s.reason}</p></li>`).join('')}</ul>
+                           </div>
+                            <div>
+                                <h4 class="font-bold text-yellow-400 mb-2">ทรงผมที่ควรหลีกเลี่ยง</h4>
+                                <ul class="list-disc list-inside space-y-1">${hairstyle.styles_to_avoid.map(s => `<li>${s}</li>`).join('')}</ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Analysis -->
+                    <div class="space-y-4">
+                        <div class="glass-card p-4 rounded-lg"><h3 class="font-bold text-sky-400 text-center mb-2">การวิเคราะห์ดวงตา</h3><div class="grid grid-cols-2 gap-4 text-center"><div><p class="font-semibold text-slate-400 text-sm">รูปทรง</p><p class="text-lg font-bold">${data.eye_analysis.shape}</p></div><div><p class="font-semibold text-slate-400 text-sm">Canthal Tilt</p><p class="text-lg font-bold">${data.eye_analysis.canthal_tilt}</p></div></div><div class="mt-3 border-t border-slate-700 pt-3"><p class="text-sm text-slate-300 text-center">${data.eye_analysis.assessment}</p></div></div>
+                        <div class="grid grid-cols-2 gap-4">
+                             <div class="glass-card p-4 rounded-lg text-center"><h3 class="font-bold text-sky-400">รูปทรงคิ้ว</h3><p class="text-lg">${data.eyebrow_shape}</p></div>
+                            <div class="glass-card p-4 rounded-lg text-center"><h3 class="font-bold text-sky-400">รูปทรงปาก</h3><p class="text-lg">${data.mouth_shape}</p></div>
+                        </div>
+                        <div class="glass-card p-4 rounded-lg"><h3 class="font-bold text-sky-400">รูปทรงใบหน้า</h3><p class="text-xl">${data.face_shape}</p></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="glass-card p-4 rounded-lg"><h3 class="font-bold text-green-400">จุดแข็ง (Halo Features)</h3><ul class="list-disc list-inside mt-1">${data.halo_features.map(f => `<li>${f}</li>`).join('')}</ul></div>
+                            <div class="glass-card p-4 rounded-lg"><h3 class="font-bold text-yellow-400">จุดด้อย / จุด Chopped</h3><ul class="list-disc list-inside mt-1">${data.flaws_and_chopped_features.map(f => `<li>${f}</li>`).join('')}</ul></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderSideProfile(data) {
+            document.getElementById('tab-content-side').innerHTML = `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="glass-card p-4 rounded-lg text-center"><h3 class="font-bold text-sky-400">Gonial Angle</h3><p class="text-4xl font-bold my-1">${data.gonial_angle_degrees}°</p><p class="text-slate-400">${data.gonial_angle_assessment}</p></div>
+                        <div class="glass-card p-4 rounded-lg text-center"><h3 class="font-bold text-sky-400">Ramus Length</h3><p class="text-2xl font-bold my-3">${data.ramus_length_assessment}</p></div>
+                        <div class="glass-card p-4 rounded-lg"><h3 class="font-bold text-sky-400">Maxilla Projection</h3><p>${data.maxilla_projection}</p></div>
+                        <div class="glass-card p-4 rounded-lg"><h3 class="font-bold text-sky-400">Mandible Projection</h3><p>${data.mandible_projection}</p></div>
+                    </div>
+                    <div class="glass-card p-4 rounded-lg"><h3 class="font-bold text-sky-400">Facial Convexity</h3><p>${data.facial_convexity}</p></div>
+                    <div class="glass-card p-4 rounded-lg"><h3 class="font-bold text-sky-400">คำแนะนำเชิงปฏิบัติ</h3><ul class="list-disc list-inside mt-2 space-y-1">${data.recommendations.map(r => `<li>${r}</li>`).join('')}</ul></div>
+                </div>
+            `;
+        }
+
+        // --- Utility Functions ---
+        function switchTab(tab) {
+            resultTabs.forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
+            tabContents.forEach(content => content.classList.toggle('hidden', content.id !== `tab-content-${tab}`));
+        }
+        
+        function resetResults() {
+            analysisResults.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            welcomeMessage.classList.remove('hidden');
+            initialAnalysisJSON = null;
+            chatHistory = [];
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            welcomeMessage.classList.add('hidden');
+            loader.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+
