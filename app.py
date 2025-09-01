@@ -80,6 +80,9 @@ def analyze():
         )
         db.commit()
         return jsonify(analysis_result)
+    except requests.exceptions.Timeout:
+        app.logger.error("Gemini API call timed out.")
+        return jsonify({"error": "การวิเคราะห์ใช้เวลานานเกินไป (Timeout) โปรดลองอีกครั้ง"}), 504
     except Exception as e:
         app.logger.error(f"Error during Gemini analysis: {e}")
         return jsonify({"error": str(e)}), 500
@@ -96,6 +99,9 @@ def chat():
     try:
         chat_response = call_gemini_api_for_chat(chat_history, initial_analysis)
         return jsonify({"response": chat_response})
+    except requests.exceptions.Timeout:
+        app.logger.error("Gemini Chat API call timed out.")
+        return jsonify({"error": "การเชื่อมต่อ AI Chat ใช้เวลานานเกินไป (Timeout) โปรดลองอีกครั้ง"}), 504
     except Exception as e:
         app.logger.error(f"Error during Gemini chat: {e}")
         return jsonify({"error": str(e)}), 500
@@ -180,7 +186,8 @@ Schema: {{
         ]
 
     payload = {"contents": [{"parts": parts}], "generationConfig": {"responseMimeType": "application/json"}}
-    response = requests.post(api_url, json=payload)
+    # THE FIX IS HERE: Added a timeout of 29 seconds
+    response = requests.post(api_url, json=payload, timeout=29)
     response.raise_for_status()
     result_json = response.json()
     json_text = result_json['candidates'][0]['content']['parts'][0]['text']
@@ -199,13 +206,10 @@ def call_gemini_api_for_chat(chat_history, initial_analysis):
     }
 
     payload = {"contents": chat_history, "systemInstruction": system_instruction}
-    response = requests.post(api_url, json=payload)
+    # THE FIX IS HERE: Added a timeout of 29 seconds
+    response = requests.post(api_url, json=payload, timeout=29)
     response.raise_for_status()
     result_json = response.json()
     return result_json['candidates'][0]['content']['parts'][0]['text']
-
-
-
-#### **2. อัปเดตการเปลี่ยนแปลงขึ้น GitHub**
 
 
