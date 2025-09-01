@@ -46,6 +46,12 @@ def init_db():
         ''')
         db.commit()
 
+# --- Initialize Database on startup (THE FIX IS HERE) ---
+# บรรทัดนี้คือส่วนที่แก้ไข: สั่งให้สร้างฐานข้อมูลทันทีที่แอปเริ่มทำงาน
+with app.app_context():
+    init_db()
+# --------------------------------------------------------
+
 # --- API Routes ---
 @app.route('/')
 def index():
@@ -146,14 +152,14 @@ def call_gemini_api_for_analysis(front_b64, side_b64=None):
     parts = []
     
     if side_b64:
-        prompt = f'{base_prompt}\nSchema: {{\n  "front_profile_analysis": {{ {schema} }},\n  "side_profile_analysis": {{\n    "gonial_angle_degrees": "integer (110-130)", "gonial_angle_assessment": "string (เฉียบคม/ปกติ/ป้าน จากภาพ)", "ramus_length_assessment": "string (สั้น/ปกติ/ยาว จากภาพ)", "maxilla_projection": "string (ปกติ/ยื่น/หุบ จากภาพ)", "mandible_projection": "string (ปกติ/ยื่น/หุบ จากภาพ)", "facial_convexity": "string (ตรง/นูน/เว้า จากภาพ)", "recommendations": ["string", "string (คำแนะนำเชิงปฏิบัติที่ทำได้จริง 2 ข้อจากภาพ)"]\n  }}\n}}'
+        prompt = f'{base_prompt}\\nSchema: {{\\n  "front_profile_analysis": {{ {schema} }},\\n  "side_profile_analysis": {{\\n    "gonial_angle_degrees": "integer (110-130)", "gonial_angle_assessment": "string (เฉียบคม/ปกติ/ป้าน จากภาพ)", "ramus_length_assessment": "string (สั้น/ปกติ/ยาว จากภาพ)", "maxilla_projection": "string (ปกติ/ยื่น/หุบ จากภาพ)", "mandible_projection": "string (ปกติ/ยื่น/หุบ จากภาพ)", "facial_convexity": "string (ตรง/นูน/เว้า จากภาพ)", "recommendations": ["string", "string (คำแนะนำเชิงปฏิบัติที่ทำได้จริง 2 ข้อจากภาพ)"]\\n  }}\\n}}'
         parts = [
             {"text": prompt},
             {"inlineData": {"mimeType": "image/jpeg", "data": front_b64}},
             {"inlineData": {"mimeType": "image/jpeg", "data": side_b64}}
         ]
     else:
-        prompt = f'{base_prompt}\nSchema: {{\n  "front_profile_analysis": {{ {schema} }}\n}}'
+        prompt = f'{base_prompt}\\nSchema: {{\\n  "front_profile_analysis": {{ {schema} }}\\n}}'
         parts = [
             {"text": prompt},
             {"inlineData": {"mimeType": "image/jpeg", "data": front_b64}}
@@ -183,10 +189,4 @@ def call_gemini_api_for_chat(chat_history, initial_analysis):
     response.raise_for_status()
     result_json = response.json()
     return result_json['candidates'][0]['content']['parts'][0]['text']
-
-
-if __name__ == '__main__':
-    with app.app_context():
-        init_db()
-    app.run(debug=False)
 
