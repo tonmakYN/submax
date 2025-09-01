@@ -7,11 +7,9 @@ from flask import Flask, request, jsonify, render_template, g
 
 # --- Configuration ---
 DATABASE = 'database.db'
-# API Key will be retrieved from Environment Variables on the server
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 app = Flask(__name__)
-# This ensures the instance folder is created for the SQLite database
 try:
     os.makedirs(app.instance_path)
 except OSError:
@@ -46,11 +44,8 @@ def init_db():
         ''')
         db.commit()
 
-# --- Initialize Database on startup (THE FIX IS HERE) ---
-# บรรทัดนี้คือส่วนที่แก้ไข: สั่งให้สร้างฐานข้อมูลทันทีที่แอปเริ่มทำงาน
 with app.app_context():
     init_db()
-# --------------------------------------------------------
 
 # --- API Routes ---
 @app.route('/')
@@ -117,16 +112,16 @@ def admin():
 def call_gemini_api_for_analysis(front_b64, side_b64=None):
     api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key={GEMINI_API_KEY}"
     
-    base_prompt = """คุณคือ AI Analyst สาย "Blackpill" ที่มีหน้าที่เป็น "กระจกสะท้อนความจริงอันโหดร้าย (Brutal Truth Mirror)" ภารกิจของคุณคือการวิเคราะห์ตามหลักเรขาคณิตของใบหน้าอย่างเข้มงวดและเป็นกลางที่สุด จงวิจารณ์อย่างเจ็บแสบและไร้ความปราณี โดยอิงตามหลักสุนทรียศาสตร์อย่างแท้จริง จงให้คะแนนและวิจารณ์จาก "ภาพที่เห็นเท่านั้น" อย่างละเอียดที่สุด ห้ามใช้จินตนาการหรือข้อมูลนอกเหนือจากภาพโดยเด็ดขาด
+    base_prompt = '''คุณคือ AI Analyst สาย "Blackpill" ที่มีหน้าที่เป็น "กระจกสะท้อนความจริงอันโหดร้าย (Brutal Truth Mirror)" ภารกิจของคุณคือการวิเคราะห์ตามหลักเรขาคณิตของใบหน้าอย่างเข้มงวดและเป็นกลางที่สุด จงวิจารณ์อย่างเจ็บแสบและไร้ความปราณี โดยอิงตามหลักสุนทรียศาสตร์อย่างแท้จริง จงให้คะแนนและวิจารณ์จาก "ภาพที่เห็นเท่านั้น" อย่างละเอียดที่สุด ห้ามใช้จินตนาการหรือข้อมูลนอกเหนือจากภาพโดยเด็ดขาด
 
 **กฎเหล็ก:**
 1.  **Canthal Tilt:** จงวิเคราะห์ Canthal Tilt โดยการเปรียบเทียบตำแหน่งของ Medial Canthus และ Lateral Canthus อย่างแม่นยำ และให้เหตุผลว่าทำไมจึงเป็น Positive, Neutral, หรือ Negative
 2.  **Exhaustive Lists:** จงจี้ "**ทุกจุดด้อย**" ที่เห็น ไม่ว่าจะเล็กน้อยแค่ไหนก็ตาม และลิสต์ "**ทุกจุดแข็ง**" ที่สังเกตได้ **ห้ามจำกัดจำนวน**
 3.  **Blackpill Lexicon:** จงใช้คำศัพท์เฉพาะทางของ lookism/blackpill ให้มากที่สุดเท่าที่เป็นไปได้ (เช่น bone structure, facial harmony, recessed maxilla, prominent chin, prey eyes, hunter eyes, facial thirds, mog, chopped)
 
-สร้างผลลัพธ์เป็น JSON object ที่มีโครงสร้างตาม schema ที่กำหนดเท่านั้น โดยทุกค่าที่เป็น string ต้องเป็นภาษาไทย"""
+สร้างผลลัพธ์เป็น JSON object ที่มีโครงสร้างตาม schema ที่กำหนดเท่านั้น โดยทุกค่าที่เป็น string ต้องเป็นภาษาไทย'''
 
-    schema = """
+    schema = '''
 "face_shape": "string (รูปทรงใบหน้าจากภาพ)",
 "eye_analysis": {
     "shape": "string (เช่น Hunter Eyes, Almond Eyes, Round Eyes จากภาพ)",
@@ -147,19 +142,38 @@ def call_gemini_api_for_analysis(front_b64, side_b64=None):
 "feature_ratings": { "overall_score": "integer (0-100)", "eyes": "integer (0-100)", "nose": "integer (0-100)", "lips": "integer (0-100)", "jawline_and_chin": "integer (0-100)", "forehead_and_brows": "integer (0-100)" },
 "psl_scale": { "rating": "float (1.0-10.0)", "tier": "string", "summary": "string (สรุปเหตุผลการให้คะแนนตามหลัก Blackpill อย่างตรงไปตรงมา โดยอ้างอิงจากรูป)" },
 "ratings_summary": "string (สรุปภาพรวมของคะแนนอย่างโหดเหี้ยม โดยอ้างอิงจากสิ่งที่เห็นในรูปเท่านั้น)"
-"""
+'''
     
     parts = []
     
     if side_b64:
-        prompt = f'{base_prompt}\\nSchema: {{\\n  "front_profile_analysis": {{ {schema} }},\\n  "side_profile_analysis": {{\\n    "gonial_angle_degrees": "integer (110-130)", "gonial_angle_assessment": "string (เฉียบคม/ปกติ/ป้าน จากภาพ)", "ramus_length_assessment": "string (สั้น/ปกติ/ยาว จากภาพ)", "maxilla_projection": "string (ปกติ/ยื่น/หุบ จากภาพ)", "mandible_projection": "string (ปกติ/ยื่น/หุบ จากภาพ)", "facial_convexity": "string (ตรง/นูน/เว้า จากภาพ)", "recommendations": ["string", "string (คำแนะนำเชิงปฏิบัติที่ทำได้จริง 2 ข้อจากภาพ)"]\\n  }}\\n}}'
+        prompt = f'''{base_prompt}
+Schema: {{
+  "front_profile_analysis": {{
+{schema}
+  }},
+  "side_profile_analysis": {{
+    "gonial_angle_degrees": "integer (110-130)",
+    "gonial_angle_assessment": "string (เฉียบคม/ปกติ/ป้าน จากภาพ)",
+    "ramus_length_assessment": "string (สั้น/ปกติ/ยาว จากภาพ)",
+    "maxilla_projection": "string (ปกติ/ยื่น/หุบ จากภาพ)",
+    "mandible_projection": "string (ปกติ/ยื่น/หุบ จากภาพ)",
+    "facial_convexity": "string (ตรง/นูน/เว้า จากภาพ)",
+    "recommendations": ["string", "string (คำแนะนำเชิงปฏิบัติที่ทำได้จริง 2 ข้อจากภาพ)"]
+  }}
+}}'''
         parts = [
             {"text": prompt},
             {"inlineData": {"mimeType": "image/jpeg", "data": front_b64}},
             {"inlineData": {"mimeType": "image/jpeg", "data": side_b64}}
         ]
     else:
-        prompt = f'{base_prompt}\\nSchema: {{\\n  "front_profile_analysis": {{ {schema} }}\\n}}'
+        prompt = f'''{base_prompt}
+Schema: {{
+  "front_profile_analysis": {{
+{schema}
+  }}
+}}'''
         parts = [
             {"text": prompt},
             {"inlineData": {"mimeType": "image/jpeg", "data": front_b64}}
@@ -189,4 +203,9 @@ def call_gemini_api_for_chat(chat_history, initial_analysis):
     response.raise_for_status()
     result_json = response.json()
     return result_json['candidates'][0]['content']['parts'][0]['text']
+
+
+
+#### **2. อัปเดตการเปลี่ยนแปลงขึ้น GitHub**
+
 
